@@ -48,8 +48,6 @@ export const useChat = (currentUserId: string) => {
     const getInitialUsers = async () => {
       try {
         const usersData = await chatHelpers.getAllUsers();
-        console.log({ users2: usersData });
-        console.log({currentUserId})
         if (usersData.users) {
           setUsers(usersData.users.filter((user: User) => user.uid !== currentUserId));
         }

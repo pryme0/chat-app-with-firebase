@@ -88,11 +88,11 @@ export const MessageList: React.FC<MessageListProps> = ({
                   <div className="flex items-center mb-1">
                     <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mr-2">
                       <span className="text-white text-xs font-medium">
-                        {sender?.displayName?.charAt(0).toUpperCase() || "?"}
+                        {sender?.username?.charAt(0).toUpperCase() || "?"}
                       </span>
                     </div>
                     <span className="text-xs text-gray-600 font-medium">
-                      {sender?.displayName || "Unknown User"}
+                      {sender?.username || "Unknown User"}
                     </span>
                   </div>
                 )}

@@ -22,6 +22,9 @@ import {
   arrayUnion,
   arrayRemove,
   getDoc,
+  writeBatch,
+  setDoc,
+  deleteDoc,
 } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
@@ -137,16 +140,28 @@ export const chatHelpers = {
           : [participants.find((id) => id !== currentUserId)],
       };
 
+      // Create the conversation
       const docRef = await addDoc(
         collection(db, "conversations"),
         conversationData
       );
+
+      // Add typing status for each participant
+      const typingStatusRef = collection(docRef, "typingStatus");
+
+      const batch = writeBatch(db);
+      participants.forEach((userId) => {
+        const userTypingDocRef = doc(typingStatusRef, userId);
+        batch.set(userTypingDocRef, { isTyping: false });
+      });
+
+      await batch.commit();
+
       return { conversationId: docRef.id, error: null };
     } catch (error: any) {
       return { conversationId: null, error };
     }
   },
-
   // Send a message
   async sendMessage(
     conversationId: string,
@@ -183,7 +198,6 @@ export const chatHelpers = {
     conversationId: string,
     callback: (messages: any[]) => void
   ) {
-    console.log({ messages: conversationId });
     const q = query(
       collection(db, "messages"),
       where("conversationId", "==", conversationId),
@@ -284,5 +298,40 @@ export const chatHelpers = {
     const userRef = doc(db, "users", uid);
     const userSnap = await getDoc(userRef);
     return userSnap.exists() ? userSnap.data() : null;
+  },
+
+  listenToTypingStatus(
+    conversationId: string,
+    currentUserId: string,
+    setTypingUsers: (typingUsers: string[]) => void
+  ) {
+    const ref = collection(db, "conversations", conversationId, "typingStatus");
+    return onSnapshot(ref, (snapshot) => {
+      const typingUsers = snapshot.docs
+        .filter(
+          (doc) => doc.id !== currentUserId && doc.data()?.isTyping === true
+        )
+        .map((doc) => doc.id);
+
+      console.log({ typingUsers });
+      setTypingUsers(typingUsers);
+    });
+  },
+  setTypingStatus(conversationId: string, userId: string, isTyping: boolean) {
+    const typingDocRef = doc(
+      db,
+      "conversations",
+      conversationId,
+      "typingStatus",
+      userId
+    );
+
+    console.log("setting typing status");
+    console.log({ isTyping });
+    if (isTyping) {
+      return setDoc(typingDocRef, { typing: true });
+    } else {
+      return deleteDoc(typingDocRef);
+    }
   },
 };

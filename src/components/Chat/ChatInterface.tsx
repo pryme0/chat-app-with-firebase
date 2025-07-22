@@ -1,12 +1,12 @@
-import React from "react";
-import { ConversationList } from "./ConversationList";
-import { MessageList } from "./MessageList";
-import { MessageInput } from "./MessageInput";
-import { ChatHeader } from "./ChatHeader";
-import { useChat } from "../../hooks/useChat";
-import { User } from "../../types";
 import { MessageCircle } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { useChat } from "../../hooks/useChat";
 import { chatHelpers } from "../../lib/firebase";
+import { User } from "../../types";
+import { ChatHeader } from "./ChatHeader";
+import { ConversationList } from "./ConversationList";
+import { MessageInput } from "./MessageInput";
+import { MessageList } from "./MessageList";
 
 interface ChatInterfaceProps {
   currentUser: User;
@@ -29,6 +29,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     getConversationParticipants,
     getConversationName,
   } = useChat(currentUser.uid);
+  const [typingUsers, setTypingUsers] = useState<string[]>([]);
 
 
   const selectedConversation = conversations.find(
@@ -62,6 +63,38 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     if (!selectedConversationId) return;
     await chatHelpers.removeUserFromGroup(selectedConversationId, userId);
   };
+  
+  useEffect(() => {
+    if (!selectedConversationId || !currentUser.uid) return;
+
+    const unsubscribe = chatHelpers.listenToTypingStatus(
+      selectedConversationId,
+      currentUser.uid,
+      setTypingUsers
+    );
+
+    return () => unsubscribe();
+  }, [selectedConversationId, currentUser.uid]);
+
+const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const handleTyping = () => {
+    chatHelpers.setTypingStatus(selectedConversationId as any as string
+      , currentUser.uid, true);
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      chatHelpers.setTypingStatus(
+        selectedConversationId as any as string,
+        currentUser.uid,
+        false
+      );
+    }, 3000);
+  };
+
+ 
 
   return (
     <div className="h-screen bg-gray-50 flex">
@@ -74,6 +107,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         getConversationName={getConversationName}
         getConversationParticipants={getConversationParticipants}
         currentUserId={currentUser.uid}
+        typingUsers={typingUsers}
       />
 
       <div className="flex-1 flex flex-col">
@@ -87,6 +121,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               onSignOut={onSignOut}
               onAddUserToGroup={handleAddUserToGroup}
               onRemoveUserFromGroup={handleRemoveUserFromGroup}
+              typingUsers={typingUsers}
             />
             <MessageList
               messages={messages}
@@ -94,7 +129,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               currentUserId={currentUser.uid}
               isLoading={isLoading}
             />
-            <MessageInput onSendMessage={sendMessage} disabled={isLoading} />
+            <MessageInput
+              handleTyping={handleTyping}
+              onSendMessage={sendMessage}
+              disabled={isLoading}
+            />
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center bg-gray-50">

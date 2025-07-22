@@ -1,27 +1,29 @@
-import React, { useState } from 'react';
-import { Send, Paperclip, Smile } from 'lucide-react';
+import React, { useState } from "react";
+import { Send, Paperclip, Smile } from "lucide-react";
 
 interface MessageInputProps {
   onSendMessage: (content: string) => void;
   disabled?: boolean;
+  handleTyping: () => void;
 }
 
 export const MessageInput: React.FC<MessageInputProps> = ({
   onSendMessage,
   disabled = false,
+  handleTyping,
 }) => {
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim() && !disabled) {
       onSendMessage(message.trim());
-      setMessage('');
+      setMessage("");
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
     }
@@ -36,19 +38,22 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         >
           <Paperclip className="w-5 h-5" />
         </button>
-        
+
         <div className="flex-1 relative">
           <textarea
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={(e) => {
+              handleTyping();
+              setMessage(e.target.value);
+            }}
             onKeyPress={handleKeyPress}
             placeholder="Type a message..."
             disabled={disabled}
             rows={1}
             className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ maxHeight: '120px' }}
+            style={{ maxHeight: "120px" }}
           />
-          
+
           <button
             type="button"
             className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
@@ -56,7 +61,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             <Smile className="w-5 h-5" />
           </button>
         </div>
-        
+
         <button
           type="submit"
           disabled={!message.trim() || disabled}

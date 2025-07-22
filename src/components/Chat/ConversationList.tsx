@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { User, Conversation } from "../../types";
-import { MessageCircle, Search, Plus, Users, UserPlus } from "lucide-react";
+import { MessageCircle, Search, Plus, Users } from "lucide-react";
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -16,6 +16,7 @@ interface ConversationListProps {
   getConversationName: (conversation: Conversation) => string;
   getConversationParticipants: (conversation: Conversation) => User[];
   currentUserId: string;
+  typingUsers: string[]; // Just a list of typing user IDs (for the selected conversation)
 }
 
 export const ConversationList: React.FC<ConversationListProps> = ({
@@ -27,6 +28,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   getConversationName,
   getConversationParticipants,
   currentUserId,
+  typingUsers,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showNewConversation, setShowNewConversation] = useState(false);
@@ -34,19 +36,11 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [groupName, setGroupName] = useState("");
 
-  console.log({ currentUserId });
-
-  console.log({ users });
-
-  console.log({selectedConversationId})
-
   const filteredUsers = users.filter(
     (user) =>
       user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  console.log({ conversations });
 
   const filteredConversations = conversations.filter((conv) => {
     const name = getConversationName(conv);
@@ -74,6 +68,21 @@ export const ConversationList: React.FC<ConversationListProps> = ({
         ? prev.filter((id) => id !== userId)
         : [...prev, userId]
     );
+  };
+
+  const getTypingText = (): string | null => {
+    const typing = typingUsers.filter((uid) => uid !== currentUserId);
+
+    if (typing.length === 0) return null;
+
+    const typingUsernames = typing
+      .map((id) => users.find((u) => u.uid === id)?.username)
+      .filter(Boolean);
+
+    if (typingUsernames.length === 0) return null;
+    if (typingUsernames.length === 1)
+      return `${typingUsernames[0]} is typing...`;
+    return `${typingUsernames.join(", ")} are typing...`;
   };
 
   return (
@@ -118,116 +127,6 @@ export const ConversationList: React.FC<ConversationListProps> = ({
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {/* Group Creation */}
-        {showGroupCreation && (
-          <div className="p-4 border-b border-gray-200 bg-green-50">
-            <h3 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
-              <Users className="w-4 h-4 mr-2" />
-              Create Group Chat
-            </h3>
-
-            <input
-              type="text"
-              value={groupName}
-              onChange={(e) => setGroupName(e.target.value)}
-              placeholder="Group name"
-              className="w-full mb-3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            />
-
-            <div className="space-y-2 mb-3 max-h-40 overflow-y-auto">
-              {filteredUsers.map((user) => (
-                <button
-                  key={user.uid}
-                  onClick={() => toggleUserSelection(user.uid)}
-                  className={`w-full flex items-center p-2 rounded-lg transition-colors ${
-                    selectedUsers.includes(user.uid)
-                      ? "bg-green-100 border border-green-300"
-                      : "hover:bg-gray-100"
-                  }`}
-                >
-                  <div className="relative">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                      <span className="text-white text-sm font-medium">
-                        {user.username.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    {user.isOnline && (
-                      <div className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 border border-white rounded-full"></div>
-                    )}
-                  </div>
-                  <div className="ml-3 flex-1 text-left">
-                    <p className="text-sm font-medium text-gray-900">
-                      {user.username}
-                    </p>
-                  </div>
-                  {selectedUsers.includes(user.uid) && (
-                    <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                      <span className="text-white text-xs">✓</span>
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex space-x-2">
-              <button
-                onClick={handleCreateGroup}
-                disabled={selectedUsers.length < 2 || !groupName.trim()}
-                className="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                Create Group ({selectedUsers.length})
-              </button>
-              <button
-                onClick={() => {
-                  setShowGroupCreation(false);
-                  setSelectedUsers([]);
-                  setGroupName("");
-                }}
-                className="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* New Direct Message */}
-        {showNewConversation && !showGroupCreation && (
-          <div className="p-4 border-b border-gray-200 bg-blue-50">
-            <h3 className="text-sm font-medium text-gray-900 mb-3 flex items-center">
-              <UserPlus className="w-4 h-4 mr-2" />
-              Start new conversation
-            </h3>
-            <div className="space-y-2">
-              {filteredUsers.map((user) => (
-                <button
-                  key={user.uid}
-                  onClick={() => handleCreateDirectMessage(user.uid)}
-                  className="w-full flex items-center p-3 hover:bg-white rounded-lg transition-colors"
-                >
-                  <div className="relative">
-                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                      <span className="text-white font-medium">
-                        {user.username.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    {user.isOnline && (
-                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
-                    )}
-                  </div>
-                  <div className="ml-3 flex-1 text-left">
-                    <p className="font-medium text-gray-900">
-                      {user.username}
-                    </p>
-                    <p className="text-sm text-gray-500">{user.email}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Conversations List */}
         <div className="p-2">
           {filteredConversations.length === 0 ? (
             <div className="text-center py-8">
@@ -243,6 +142,9 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                 const isSelected = selectedConversationId === conversation.id;
                 const participants = getConversationParticipants(conversation);
                 const conversationName = getConversationName(conversation);
+
+                const showTyping = conversation.id === selectedConversationId;
+                const typingText = showTyping ? getTypingText() : null;
 
                 return (
                   <button
@@ -287,18 +189,22 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                           <span className="text-xs text-gray-500">
                             {formatDistanceToNow(
                               conversation.lastMessageTime.toDate(),
-                              {
-                                addSuffix: true,
-                              }
+                              { addSuffix: true }
                             )}
                           </span>
                         )}
                       </div>
 
-                      {conversation.lastMessage && (
-                        <p className="text-sm text-gray-500 truncate">
-                          {conversation.lastMessage}
+                      {typingText ? (
+                        <p className="text-sm text-blue-500 italic truncate">
+                          {typingText}
                         </p>
+                      ) : (
+                        conversation.lastMessage && (
+                          <p className="text-sm text-gray-500 truncate">
+                            {conversation.lastMessage}
+                          </p>
+                        )
                       )}
                     </div>
                   </button>
