@@ -37,7 +37,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   if (messages.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center px-4">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <MessageCircle className="w-8 h-8 text-gray-400" />
           </div>
@@ -51,7 +51,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-4">
       {messages.map((message, index) => {
         const isCurrentUser = message.senderId === currentUserId;
         const sender = getUserById(message.senderId);
@@ -80,7 +80,7 @@ export const MessageList: React.FC<MessageListProps> = ({
               }`}
             >
               <div
-                className={`max-w-xs lg:max-w-md ${
+                className={`max-w-[85%] sm:max-w-[75%] md:max-w-md ${
                   isCurrentUser ? "order-2" : "order-1"
                 }`}
               >
@@ -91,14 +91,14 @@ export const MessageList: React.FC<MessageListProps> = ({
                         {sender?.username?.charAt(0).toUpperCase() || "?"}
                       </span>
                     </div>
-                    <span className="text-xs text-gray-600 font-medium">
+                    <span className="text-xs text-gray-600 font-medium truncate">
                       {sender?.username || "Unknown User"}
                     </span>
                   </div>
                 )}
 
                 <div
-                  className={`px-4 py-2 rounded-2xl ${
+                  className={`px-4 py-2 rounded-2xl break-words ${
                     isCurrentUser
                       ? "bg-blue-600 text-white"
                       : "bg-gray-100 text-gray-900"

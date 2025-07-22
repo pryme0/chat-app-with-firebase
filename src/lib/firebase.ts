@@ -64,7 +64,6 @@ export const authHelpers = {
       return { user, error: null };
     } catch (error: any) {
       console.error("❌ SignUp error:", error);
-
       // If user was created but Firestore failed, you might want to handle cleanup
       if (error.code && error.code.includes("firestore")) {
         console.error("Firestore error occurred after user creation");
@@ -311,12 +310,11 @@ export const chatHelpers = {
       const typingUsers = snapshot.docs
         .filter(
           (doc) =>
-            doc.data()?.userId === currentUserId &&
+            doc.data()?.userId !== currentUserId &&
             doc.data()?.isTyping === true
         )
         .map((doc) => doc.id);
 
-      console.log({ typingUsers });
       setTypingUsers(typingUsers);
     });
   },

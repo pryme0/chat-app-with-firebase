@@ -30,8 +30,12 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   };
 
   return (
-    <div className="p-4 border-t border-gray-200 bg-white">
-      <form onSubmit={handleSubmit} className="flex items-center space-x-3">
+    <div className="p-3 border-t border-gray-200 bg-white">
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-wrap sm:flex-nowrap items-center gap-3"
+      >
+        {/* Attachment Button */}
         <button
           type="button"
           className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -39,7 +43,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           <Paperclip className="w-5 h-5" />
         </button>
 
-        <div className="flex-1 relative">
+        {/* Text Input */}
+        <div className="flex-1 relative min-w-[70%] sm:min-w-0">
           <textarea
             value={message}
             onChange={(e) => {
@@ -50,10 +55,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             placeholder="Type a message..."
             disabled={disabled}
             rows={1}
-            className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
             style={{ maxHeight: "120px" }}
           />
-
           <button
             type="button"
             className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded transition-colors"
@@ -62,6 +66,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           </button>
         </div>
 
+        {/* Send Button */}
         <button
           type="submit"
           disabled={!message.trim() || disabled}
