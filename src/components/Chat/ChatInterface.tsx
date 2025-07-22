@@ -91,7 +91,7 @@ const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
         currentUser.uid,
         false
       );
-    }, 3000);
+    }, 4000);
   };
 
  

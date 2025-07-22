@@ -307,9 +307,12 @@ export const chatHelpers = {
   ) {
     const ref = collection(db, "conversations", conversationId, "typingStatus");
     return onSnapshot(ref, (snapshot) => {
+
       const typingUsers = snapshot.docs
         .filter(
-          (doc) => doc.id !== currentUserId && doc.data()?.isTyping === true
+          (doc) =>
+            doc.data()?.userId === currentUserId &&
+            doc.data()?.isTyping === true
         )
         .map((doc) => doc.id);
 
@@ -326,10 +329,8 @@ export const chatHelpers = {
       userId
     );
 
-    console.log("setting typing status");
-    console.log({ isTyping });
     if (isTyping) {
-      return setDoc(typingDocRef, { typing: true });
+      return setDoc(typingDocRef, { isTyping: true, userId });
     } else {
       return deleteDoc(typingDocRef);
     }

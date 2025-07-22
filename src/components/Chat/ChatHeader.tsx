@@ -70,8 +70,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   const renderTypingStatus = () => {
     if (typingUsers.length === 0) return null;
 
-    console.log({ typingUsers });
-
     const displayNames = typingUsers
       .map(
         (uid) => users.find((user) => user.uid === uid)?.username || "Someone"
