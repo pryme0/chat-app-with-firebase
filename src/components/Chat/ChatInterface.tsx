@@ -31,6 +31,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   } = useChat(currentUser.uid);
 
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const [replyToMessage, setReplyToMessage] = useState<any>(null);
 
   const selectedConversation = conversations.find(
     (c) => c.id === selectedConversationId
@@ -39,42 +40,40 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     ? getConversationParticipants(selectedConversation)
     : [];
 
-const handleCreateConversation = async (
-  participantIds: string[],
-  isGroup: boolean = false,
-  groupName?: string
-) => {
-  const allNewParticipantIds = [...participantIds, currentUser.uid];
+  const handleCreateConversation = async (
+    participantIds: string[],
+    isGroup: boolean = false,
+    groupName?: string
+  ) => {
+    const allNewParticipantIds = [...participantIds, currentUser.uid];
 
-  // Function to compare two arrays for set equality
-  const areSameParticipants = (a: string[], b: string[]) => {
-    if (a.length !== b.length) return false;
-    const setA = new Set(a);
-    return b.every((id) => setA.has(id));
-  };
+    const areSameParticipants = (a: string[], b: string[]) => {
+      if (a.length !== b.length) return false;
+      const setA = new Set(a);
+      return b.every((id) => setA.has(id));
+    };
 
-  const matchingConversation = conversations.find((conv) => {
-    const existingIds = conv.participants; // or p.uid if that's the schema
-    return (
-      areSameParticipants(existingIds, allNewParticipantIds) &&
-      conv.isGroup === isGroup
-    );
-  });
+    const matchingConversation = conversations.find((conv) => {
+      const existingIds = conv.participants;
+      return (
+        areSameParticipants(existingIds, allNewParticipantIds) &&
+        conv.isGroup === isGroup
+      );
+    });
 
-  if (matchingConversation) {
-    selectConversation(matchingConversation.id);
-  } else {
-    const conversationId = await createConversation(
-      participantIds,
-      isGroup,
-      groupName
-    );
-    if (conversationId) {
-      selectConversation(conversationId);
+    if (matchingConversation) {
+      selectConversation(matchingConversation.id);
+    } else {
+      const conversationId = await createConversation(
+        participantIds,
+        isGroup,
+        groupName
+      );
+      if (conversationId) {
+        selectConversation(conversationId);
+      }
     }
-  }
-};
-
+  };
 
   const handleAddUserToGroup = async (userId: string) => {
     if (!selectedConversationId) return;
@@ -100,11 +99,9 @@ const handleCreateConversation = async (
 
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const handleTyping = () => {
-    chatHelpers.setTypingStatus(
-      selectedConversationId as any as string,
-      currentUser.uid,
-      true
-    );
+    if (!selectedConversationId) return;
+
+    chatHelpers.setTypingStatus(selectedConversationId, currentUser.uid, true);
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
@@ -112,11 +109,33 @@ const handleCreateConversation = async (
 
     typingTimeoutRef.current = setTimeout(() => {
       chatHelpers.setTypingStatus(
-        selectedConversationId as any as string,
+        selectedConversationId,
         currentUser.uid,
         false
       );
     }, 4000);
+  };
+
+  const handleSendMessage = async (
+    content: string,
+    replyTo?: {
+      id: string;
+      senderId: string;
+      content: string;
+      messageType: "text" | "image" | "file";
+    }
+  ) => {
+    if (!selectedConversationId) return;
+
+    console.log({ replyTo });
+
+    await sendMessage(content, "text",replyTo &&  {
+      messageId: replyTo?.id,
+      senderId: replyTo?.senderId,
+      content: replyTo?.content,
+      messageType: replyTo?.messageType,
+    });
+    setReplyToMessage(null); // Clear reply after sending
   };
 
   return (
@@ -159,14 +178,17 @@ const handleCreateConversation = async (
                 users={users}
                 currentUserId={currentUser.uid}
                 isLoading={isLoading}
+                onReply={setReplyToMessage}
               />
             </div>
 
             <div className="flex-shrink-0">
               <MessageInput
                 handleTyping={handleTyping}
-                onSendMessage={sendMessage}
+                onSendMessage={handleSendMessage}
                 disabled={isLoading}
+                replyTo={replyToMessage}
+                onCancelReply={() => setReplyToMessage(null)}
               />
             </div>
           </>

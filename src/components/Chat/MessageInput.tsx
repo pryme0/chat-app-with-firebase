@@ -1,24 +1,29 @@
 import React, { useState } from "react";
-import { Send, Paperclip, Smile } from "lucide-react";
+import { Send, Paperclip, Smile, X } from "lucide-react";
 
 interface MessageInputProps {
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string, replyTo?: any) => void;
   disabled?: boolean;
   handleTyping: () => void;
+  replyTo?: any;
+  onCancelReply?: () => void;
 }
 
 export const MessageInput: React.FC<MessageInputProps> = ({
   onSendMessage,
   disabled = false,
   handleTyping,
+  replyTo,
+  onCancelReply,
 }) => {
   const [message, setMessage] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim() && !disabled) {
-      onSendMessage(message.trim());
+      onSendMessage(message.trim(), replyTo);
       setMessage("");
+      if (onCancelReply) onCancelReply(); // Clear reply context after sending
     }
   };
 
@@ -31,6 +36,23 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
   return (
     <div className="p-3 border-t border-gray-200 bg-white">
+      {/* Reply Preview */}
+      {replyTo && (
+        <div className="mb-2 px-4 py-2 bg-gray-100 border-l-4 border-blue-500 rounded-md relative">
+          <div className="text-xs text-gray-500">Replying to:</div>
+          <div className="text-sm text-gray-800 line-clamp-2">
+            {replyTo.content}
+          </div>
+          <button
+            onClick={onCancelReply}
+            className="absolute top-1 right-1 p-1 text-gray-400 hover:text-gray-600"
+            type="button"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       <form
         onSubmit={handleSubmit}
         className="flex flex-wrap sm:flex-nowrap items-center gap-3"

@@ -15,9 +15,15 @@ export interface Message {
   conversationId: string;
   senderId: string;
   content: string;
-  messageType: 'text' | 'image' | 'file';
+  messageType: "text" | "image" | "file";
   timestamp: any;
   readBy: string[];
+  replyTo?: {
+    messageId: string;
+    senderId: string;
+    content: string;
+    messageType: "text" | "image" | "file";
+  };
 }
 
 export interface Conversation {

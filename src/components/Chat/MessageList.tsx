@@ -1,13 +1,20 @@
 import React, { useEffect, useRef } from "react";
 import { format } from "date-fns";
+import {
+  Check,
+  CheckCheck,
+  MessageCircle,
+  CornerUpLeft,
+  Reply,
+} from "lucide-react";
 import { Message, User } from "../../types";
-import { Check, CheckCheck, MessageCircle } from "lucide-react";
 
 interface MessageListProps {
   messages: Message[];
   users: User[];
   currentUserId: string;
   isLoading: boolean;
+  onReply?: (message: Message) => void;
 }
 
 export const MessageList: React.FC<MessageListProps> = ({
@@ -15,6 +22,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   users,
   currentUserId,
   isLoading,
+  onReply,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -22,9 +30,10 @@ export const MessageList: React.FC<MessageListProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const getUserById = (userId: string) => {
-    return users.find((user) => user.uid === userId);
-  };
+  const getUserById = (userId: string) =>
+    users.find((user) => user.uid === userId);
+
+  const getMessageById = (id?: string) => messages.find((msg) => msg.id === id);
 
   if (isLoading) {
     return (
@@ -61,7 +70,11 @@ export const MessageList: React.FC<MessageListProps> = ({
             messages[index - 1].timestamp &&
             message.timestamp.toDate().getTime() -
               messages[index - 1].timestamp.toDate().getTime() >
-              300000); // 5 minutes
+              300000); // 5 min gap
+
+        const repliedToMessage = message.replyTo?.messageId
+          ? getMessageById(message.replyTo.messageId)
+          : null;
 
         return (
           <div key={message.id} className="space-y-2">
@@ -98,16 +111,42 @@ export const MessageList: React.FC<MessageListProps> = ({
                 )}
 
                 <div
-                  className={`px-4 py-2 rounded-2xl break-words ${
+                  className={`group relative px-4 py-2 rounded-2xl break-words ${
                     isCurrentUser
                       ? "bg-blue-600 text-white"
                       : "bg-gray-100 text-gray-900"
                   }`}
                 >
+                  {/* Replied Message Preview */}
+                  {message.replyTo && (
+                    <div
+                      className={`mb-2 px-3 py-2 rounded-md text-xs border-l-4 flex gap-2 items-start ${
+                        isCurrentUser
+                          ? "bg-blue-500 bg-opacity-30 border-blue-300"
+                          : "bg-white border-gray-300"
+                      }`}
+                    >
+                      <Reply className="w-4 h-4 mt-0.5 text-gray-400 shrink-0" />
+                      <div className="flex flex-col overflow-hidden">
+                        <p className="font-semibold truncate text-xs">
+                          {getUserById(message.replyTo.senderId)?.username ||
+                            "Unknown"}
+                        </p>
+                        <p className="text-xs text-gray-700 truncate max-w-[220px]">
+                          {repliedToMessage?.content ||
+                            message.replyTo.content ||
+                            "[Message not available]"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Message Content */}
                   <p className="text-sm whitespace-pre-wrap">
                     {message.content}
                   </p>
 
+                  {/* Footer with time + read check */}
                   <div
                     className={`flex items-center justify-end mt-1 space-x-1 ${
                       isCurrentUser ? "text-blue-100" : "text-gray-500"
@@ -128,6 +167,17 @@ export const MessageList: React.FC<MessageListProps> = ({
                       </div>
                     )}
                   </div>
+
+                  {/* Reply Button on Hover */}
+                  {onReply && (
+                    <button
+                      onClick={() => onReply(message)}
+                      className="absolute right-1 top-1 p-1 rounded hover:bg-white hover:bg-opacity-20 transition hidden group-hover:block"
+                      title="Reply"
+                    >
+                      <CornerUpLeft className="ml-2 w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

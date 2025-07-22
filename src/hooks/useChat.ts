@@ -67,19 +67,34 @@ export const useChat = (currentUserId: string) => {
   }, [currentUserId]);
 
   // FIXED: Use useCallback to prevent recreation on every render
-  const sendMessage = useCallback(async (content: string) => {
+const sendMessage = useCallback(
+  async (
+    content: string,
+    messageType: "text" | "image" | "file" = "text",
+    replyTo?: {
+      messageId: string;
+      senderId: string;
+      content: string;
+      messageType: "text" | "image" | "file";
+    }
+  ) => {
     if (!selectedConversationId || !currentUserId) return;
-    
+
     const { error } = await chatHelpers.sendMessage(
       selectedConversationId,
       currentUserId,
-      content
+      content,
+      messageType,
+      replyTo
     );
-    
+
     if (error) {
       console.error("Error sending message:", error);
     }
-  }, [selectedConversationId, currentUserId]);
+  },
+  [selectedConversationId, currentUserId]
+);
+
 
   // FIXED: Use useCallback to prevent recreation on every render
   const createConversation = useCallback(async (

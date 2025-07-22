@@ -166,10 +166,16 @@ export const chatHelpers = {
     conversationId: string,
     senderId: string,
     content: string,
-    messageType: "text" | "image" | "file" = "text"
+    messageType: "text" | "image" | "file" = "text",
+    replyTo?: {
+      messageId: string;
+      senderId: string;
+      content: string;
+      messageType: "text" | "image" | "file";
+    }
   ) {
     try {
-      const messageData = {
+      const messageData: any = {
         conversationId,
         senderId,
         content,
@@ -177,6 +183,18 @@ export const chatHelpers = {
         timestamp: serverTimestamp(),
         readBy: [senderId],
       };
+
+      // Include reply metadata if provided
+      if (replyTo) {
+        messageData.replyTo = {
+          messageId: replyTo.messageId,
+          senderId: replyTo.senderId,
+          content: replyTo.content,
+          messageType: replyTo.messageType,
+        };
+      }
+
+      console.log({ messageData });
 
       await addDoc(collection(db, "messages"), messageData);
 
@@ -191,7 +209,6 @@ export const chatHelpers = {
       return { error };
     }
   },
-
   // Listen to messages in a conversation
   subscribeToMessages(
     conversationId: string,
@@ -306,7 +323,6 @@ export const chatHelpers = {
   ) {
     const ref = collection(db, "conversations", conversationId, "typingStatus");
     return onSnapshot(ref, (snapshot) => {
-
       const typingUsers = snapshot.docs
         .filter(
           (doc) =>
