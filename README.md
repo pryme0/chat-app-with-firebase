@@ -1,4 +1,6 @@
-# Real-time Messaging Application with Firebase backend
+# Real-time Messaging Application with Firebase Backend
+
+A modern real-time chat application built using React (Vite), TypeScript, and Firebase. This project demonstrates real-time communication, user management, and scalable architecture using Firebase services.
 
 ## 🚀 Features
 
@@ -18,6 +20,8 @@
 - Real-time Group Updates
 - Responsive UI (Mobile & Desktop)
 - Username Editing & Avatar Updating
+- **Reply to Specific Messages** – Reply functionality with message context
+- **Typing Indicators** – Real-time typing status notifications
 
 ## 🛠️ Tech Stack
 
@@ -31,7 +35,7 @@
 
 ### ⚙️ Prerequisites
 
-- Node.js v18+ and npm
+- Node.js v18+ and yarn (npm will work as well)
 - Firebase account and project
 
 ### 📁 Project Setup
@@ -39,9 +43,9 @@
 1. **Clone Repository**
 
    ```bash
-   git clone https://github.com/your-username/your-repo.git
-   cd your-repo
-   npm install
+   git clone https://github.com/pryme0/chat-app-with-firebase.git
+   cd chat-app-with-firebase
+   yarn install
    ```
 
 2. **Firebase Setup**
@@ -120,7 +124,7 @@ service firebase.storage {
 ## 🧪 Run the App Locally
 
 ```bash
-npm run dev
+yarn dev
 ```
 
 Then visit: <http://localhost:5173>
@@ -199,28 +203,32 @@ Then visit: <http://localhost:5173>
 }
 ```
 
-## 📦 Deployment
+## 🎯 Advanced Features Implementation
 
-### Options
+### 💬 Reply to Specific Messages
 
-- **Firebase Hosting**
-  - Great for full integration
-  - Use `firebase deploy`
-  
-- **Netlify / Vercel**
-  - Static hosting for Vite apps
-  
-- **Docker**
-  - Containerized deployment (optional)
+**Approach:**
+Users can reply to specific messages by storing metadata within each message indicating the reply context. This metadata includes the original message ID, content, and sender ID.
 
-## 📌 Future Enhancements
+**Key Implementation Details:**
 
-- ✅ Avatar Uploading (with deletion of old)
-- ⏳ File Sharing
-- ⏳ Typing Indicators
-- ⏳ Push Notifications
-- ⏳ Dark Mode
-- ⏳ Video/Audio Messaging
+- `replyTo` field added to the Message interface with original message context
+- When replying, the UI captures the selected message and includes the `replyTo` data when sending the new message
+- In the chat UI, replied messages are visually linked to the original message with a preview box or quote
+- Clicking on a replied message scrolls to the original message (optional but supported for better UX)
+
+### ⌨️ Typing Indicators
+
+**Approach:**
+Real-time typing indicators are implemented using a `typingStatus` subcollection under each conversation document in Firestore. When a user starts typing, we update a document inside this subcollection with their typing status.
+
+**Key Implementation Details:**
+
+- Each conversation has a `typingStatus` subcollection where each user's typing status is stored under their user ID
+- When a user starts typing, their document in the `typingStatus` subcollection is updated to `{ isTyping: true }`
+- Status resets to `{ isTyping: false }` after a delay (e.g., 2 seconds) of inactivity
+- Typing updates are throttled or debounced to avoid excessive writes to Firestore
+- Other participants subscribe to this subcollection and show a "User is typing..." message when any other participant's `isTyping` status is true
 
 ## 🧑‍💻 Contributing
 
