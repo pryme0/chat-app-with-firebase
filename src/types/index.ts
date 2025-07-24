@@ -7,7 +7,7 @@ export interface User {
   isOnline: boolean;
   lastSeen: any;
   createdAt: any;
-  avatar_url?: string;
+  avatar?: string;
 }
 
 export interface Message {
@@ -17,7 +17,6 @@ export interface Message {
   content: string;
   messageType: "text" | "image" | "file";
   timestamp: any;
-  readBy: string[];
   replyTo?: {
     messageId: string;
     senderId: string;

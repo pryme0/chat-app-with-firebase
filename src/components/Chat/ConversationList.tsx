@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { User, Conversation } from "../../types";
 import { MessageCircle, Search, Plus, Users, Menu, X } from "lucide-react";
+import { ProfileSection } from "./ProfileSection";
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -35,7 +36,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   const [showGroupCreation, setShowGroupCreation] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [groupName, setGroupName] = useState("");
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // new
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const filteredUsers = users.filter(
     (user) =>
@@ -73,7 +74,6 @@ export const ConversationList: React.FC<ConversationListProps> = ({
     const typingUsernames = typing
       .map((id) => users.find((u) => u.uid === id)?.username)
       .filter(Boolean);
-
     if (typingUsernames.length === 0) return null;
     if (typingUsernames.length === 1)
       return `${typingUsernames[0]} is typing...`;
@@ -85,12 +85,12 @@ export const ConversationList: React.FC<ConversationListProps> = ({
     setShowGroupCreation(false);
     setGroupName("");
     setSelectedUsers([]);
-    setIsSidebarOpen(false); // hide drawer on selection (mobile)
+    setIsSidebarOpen(false);
   };
 
   return (
     <>
-      {/* Mobile toggle button */}
+      {/* Mobile Top Bar */}
       <div className="sm:hidden p-2 border-b border-gray-200 bg-white flex justify-between items-center">
         <h2 className="text-lg font-semibold">Messages</h2>
         <button
@@ -101,7 +101,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
         </button>
       </div>
 
-      {/* Sidebar container */}
+      {/* Sidebar */}
       <div
         className={`
           fixed inset-0 z-40 sm:static sm:z-auto
@@ -111,7 +111,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
           w-80 max-w-full h-full bg-white border-r border-gray-200 flex flex-col
         `}
       >
-        {/* Mobile close button */}
+        {/* Mobile Close Button */}
         <div className="sm:hidden flex items-center justify-between px-4 py-3 border-b border-gray-200">
           <h2 className="text-lg font-semibold">Messages</h2>
           <button
@@ -122,35 +122,41 @@ export const ConversationList: React.FC<ConversationListProps> = ({
           </button>
         </div>
 
-        {/* Top section */}
-        <div className="p-4 border-b border-gray-200 hidden sm:block">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Messages</h2>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => {
-                  setShowGroupCreation(false);
-                  setShowNewConversation(!showNewConversation);
-                }}
-                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                title="New conversation"
-              >
-                <Plus className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => {
-                  setShowNewConversation(false);
-                  setShowGroupCreation(!showGroupCreation);
-                }}
-                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                title="Create group"
-              >
-                <Users className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
+        {/* ✅ Profile Section (always at the top) */}
+        <ProfileSection currentUserId={currentUserId} />
 
-          <div className="relative mb-2">
+        {/* Action Buttons */}
+        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+          <h2 className="text-lg font-semibold text-gray-900 hidden sm:block">
+            Conversations
+          </h2>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => {
+                setShowGroupCreation(false);
+                setShowNewConversation(!showNewConversation);
+              }}
+              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              title="New conversation"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => {
+                setShowNewConversation(false);
+                setShowGroupCreation(!showGroupCreation);
+              }}
+              className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+              title="Create group"
+            >
+              <Users className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Search */}
+        <div className="px-4 py-2">
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
@@ -160,70 +166,74 @@ export const ConversationList: React.FC<ConversationListProps> = ({
               className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-
-          {/* Conditional conversation/group creation */}
-          {showNewConversation && (
-            <div className="mt-2">
-              <p className="text-sm text-gray-600 mb-1">
-                Start conversation with:
-              </p>
-              <ul className="space-y-1 max-h-48 overflow-y-auto">
-                {filteredUsers.map((user) => (
-                  <li key={user.uid}>
-                    <button
-                      onClick={() => handleCreateDirectMessage(user.uid)}
-                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-blue-50 text-sm text-gray-800"
-                    >
-                      {user.username}{" "}
-                      <span className="text-gray-400">({user.email})</span>
-                    </button>
-                  </li>
-                ))}
-                {filteredUsers.length === 0 && (
-                  <li className="text-sm text-gray-400 px-3 py-2">
-                    No users found
-                  </li>
-                )}
-              </ul>
-            </div>
-          )}
-
-          {showGroupCreation && (
-            <div className="mt-2">
-              <p className="text-sm text-gray-600 mb-1">Create group:</p>
-              <input
-                type="text"
-                placeholder="Group name"
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
-                className="w-full px-3 py-2 mb-2 border border-gray-300 rounded-lg text-sm"
-              />
-              <ul className="space-y-1 max-h-40 overflow-y-auto">
-                {filteredUsers.map((user) => (
-                  <li key={user.uid}>
-                    <label className="flex items-center space-x-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={selectedUsers.includes(user.uid)}
-                        onChange={() => toggleUserSelection(user.uid)}
-                      />
-                      <span>{user.username}</span>
-                    </label>
-                  </li>
-                ))}
-              </ul>
-              <button
-                onClick={handleCreateGroup}
-                disabled={selectedUsers.length < 2 || !groupName.trim()}
-                className="mt-2 w-full px-3 py-2 bg-green-600 text-white rounded-lg text-sm disabled:opacity-50"
-              >
-                Create Group
-              </button>
-            </div>
-          )}
         </div>
 
-        {/* Conversations */}
+        {/* New Conversation or Group UI */}
+        {(showNewConversation || showGroupCreation) && (
+          <div className="px-4 pb-4 space-y-2">
+            {showNewConversation && (
+              <>
+                <p className="text-sm text-gray-600">
+                  Start conversation with:
+                </p>
+                <ul className="space-y-1 max-h-48 overflow-y-auto">
+                  {filteredUsers.map((user) => (
+                    <li key={user.uid}>
+                      <button
+                        onClick={() => handleCreateDirectMessage(user.uid)}
+                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-blue-50 text-sm text-gray-800"
+                      >
+                        {user.username}{" "}
+                        <span className="text-gray-400">({user.email})</span>
+                      </button>
+                    </li>
+                  ))}
+                  {filteredUsers.length === 0 && (
+                    <li className="text-sm text-gray-400 px-3 py-2">
+                      No users found
+                    </li>
+                  )}
+                </ul>
+              </>
+            )}
+
+            {showGroupCreation && (
+              <>
+                <p className="text-sm text-gray-600">Create group:</p>
+                <input
+                  type="text"
+                  placeholder="Group name"
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
+                  className="w-full px-3 py-2 mb-2 border border-gray-300 rounded-lg text-sm"
+                />
+                <ul className="space-y-1 max-h-40 overflow-y-auto">
+                  {filteredUsers.map((user) => (
+                    <li key={user.uid}>
+                      <label className="flex items-center space-x-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={selectedUsers.includes(user.uid)}
+                          onChange={() => toggleUserSelection(user.uid)}
+                        />
+                        <span>{user.username}</span>
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  onClick={handleCreateGroup}
+                  disabled={selectedUsers.length < 2 || !groupName.trim()}
+                  className="mt-2 w-full px-3 py-2 bg-green-600 text-white rounded-lg text-sm disabled:opacity-50"
+                >
+                  Create Group
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Conversation List */}
         <div className="flex-1 overflow-y-auto p-2">
           {filteredConversations.length === 0 ? (
             <div className="text-center py-8">
@@ -247,7 +257,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                     key={conversation.id}
                     onClick={() => {
                       onSelectConversation(conversation.id);
-                      setIsSidebarOpen(false); // close drawer on mobile
+                      setIsSidebarOpen(false);
                     }}
                     className={`w-full flex items-center p-3 rounded-lg transition-colors ${
                       isSelected

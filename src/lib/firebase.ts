@@ -26,7 +26,13 @@ import {
   setDoc,
   deleteDoc,
 } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import {
+  deleteObject,
+  getDownloadURL,
+  getStorage,
+  ref,
+  uploadBytes,
+} from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -63,7 +69,7 @@ export const authHelpers = {
 
       return { user, error: null };
     } catch (error: any) {
-      console.error("❌ SignUp error:", error);
+      console.error(" SignUp error:", error);
       // If user was created but Firestore failed, you might want to handle cleanup
       if (error.code && error.code.includes("firestore")) {
         console.error("Firestore error occurred after user creation");
@@ -111,6 +117,59 @@ export const authHelpers = {
 
   onAuthStateChange(callback: (user: any) => void) {
     return onAuthStateChanged(auth, callback);
+  },
+
+  async getUserById(uid: string) {
+    const userRef = doc(db, "users", uid);
+    const userSnap = await getDoc(userRef);
+    return userSnap.exists() ? userSnap.data() : null;
+  },
+
+  async updateUsername(newUsername: string) {
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error("No authenticated user found");
+
+      await updateDoc(doc(db, "users", user.uid), {
+        username: newUsername,
+      });
+
+      return { success: true, error: null };
+    } catch (error: any) {
+      console.error(" Update Username Error:", error);
+      return { success: false, error };
+    }
+  },
+
+  //  Update Firestore avatar only
+  async updateAvatar(userId: string, file: File) {
+    const userDocRef = doc(db, "users", userId);
+    const userSnapshot = await getDoc(userDocRef);
+    const userData = userSnapshot.data();
+
+    // 1. Delete old avatar if exists
+    if (userData?.avatarPath) {
+      const oldAvatarRef = ref(storage, userData.avatarPath);
+      try {
+        await deleteObject(oldAvatarRef);
+      } catch (err) {
+        console.warn("Failed to delete old avatar:", err);
+      }
+    }
+
+    // 2. Upload new avatar
+    const newPath = `avatars/${userId}/${file.name}`;
+    const avatarRef = ref(storage, newPath);
+    await uploadBytes(avatarRef, file);
+    const newAvatarURL = await getDownloadURL(avatarRef);
+
+    // 3. Update Firestore user doc
+    await updateDoc(userDocRef, {
+      avatar: newAvatarURL,
+      avatarPath: newPath, // Save path for future deletion
+    });
+
+    return newAvatarURL;
   },
 };
 
@@ -308,12 +367,6 @@ export const chatHelpers = {
     } catch (error: any) {
       return { error };
     }
-  },
-
-  async getUserById(uid: string) {
-    const userRef = doc(db, "users", uid);
-    const userSnap = await getDoc(userRef);
-    return userSnap.exists() ? userSnap.data() : null;
   },
 
   listenToTypingStatus(
