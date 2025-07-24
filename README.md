@@ -1,222 +1,231 @@
-# Real-time Messaging Application with Firebase
+# Real-time Messaging Application with Firebase backend
 
-A modern, real-time messaging application built with React, TypeScript, and Firebase. This project demonstrates advanced backend development concepts including user authentication, real-time communication, group messaging, and scalable database design.
+## 🚀 Features
 
-## Features
+### ✅ Core Functionality
 
-### Core Functionality
-- **User Authentication**: Secure email/password registration and login with Firebase Auth
-- **Real-time Messaging**: Instant message delivery using Firebase Firestore real-time listeners
-- **Group Chat**: Create and manage group conversations with multiple participants
-- **User Presence**: Online/offline status indicators and last seen timestamps
-- **Message History**: Persistent message storage and retrieval
-- **Conversation Management**: Create both one-on-one and group conversations
+- **User Authentication** – Email/password login with Firebase Auth
+- **Real-time Messaging** – Send and receive messages instantly via Firestore listeners
+- **One-on-One & Group Chats** – Support for private and group conversations
+- **User Presence** – Track online/offline status and last seen
+- **Persistent History** – Store messages and sync across sessions
+- **Avatar Upload** – Upload profile pictures with Firebase Storage
 
-### Advanced Features
-- **Group Management**: Add/remove users from group chats
-- **Message Read Receipts**: Track message delivery and read status
-- **User Search**: Find users and conversations quickly
-- **Responsive Design**: Mobile-first approach with desktop optimization
-- **Real-time Updates**: Instant updates for new messages, user presence, and conversation changes
+### ⚙️ Advanced Features
 
-### Technical Highlights
-- **Firebase Integration**: Complete Firebase ecosystem integration
-- **Real-time Communication**: Firestore real-time listeners for instant updates
-- **Type Safety**: Full TypeScript implementation with comprehensive type definitions
-- **Modern UI/UX**: Clean, professional interface with smooth animations
-- **Scalable Architecture**: Component-based design with clear separation of concerns
+- Message Read Receipts
+- Group Management (Add/Remove members)
+- Real-time Group Updates
+- Responsive UI (Mobile & Desktop)
+- Username Editing & Avatar Updating
 
-## Getting Started
+## 🛠️ Tech Stack
 
-### Prerequisites
-- Node.js 18+ and npm
+- **Frontend:** React + TypeScript (Vite)
+- **Backend:** Firebase (Auth, Firestore, Storage)
+- **Realtime Sync:** Firestore listeners
+- **File Uploads:** Firebase Storage
+- **Styles:** Tailwind CSS / custom CSS
+
+## 📦 Getting Started
+
+### ⚙️ Prerequisites
+
+- Node.js v18+ and npm
 - Firebase account and project
 
-### Setup Instructions
+### 📁 Project Setup
 
-1. **Clone and Install**
+1. **Clone Repository**
+
    ```bash
+   git clone https://github.com/your-username/your-repo.git
+   cd your-repo
    npm install
    ```
 
 2. **Firebase Setup**
-   - Create a new Firebase project at [Firebase Console](https://console.firebase.google.com)
-   - Enable Authentication with Email/Password provider
-   - Create a Firestore database in production mode
-   - Copy your Firebase configuration
+   - Create a Firebase project at <https://console.firebase.google.com>
+   - Enable:
+     - Authentication (Email/Password)
+     - Firestore (Start in production mode)
+     - Storage (Allow avatar uploads)
+   - Go to Project Settings → Web App → Copy config
 
-3. **Environment Variables**
-   - Copy `.env.example` to `.env`
-   - Fill in your Firebase configuration values:
+3. **Environment Configuration**
+
+   Create a `.env` file in the root directory:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Fill in your Firebase values:
+
    ```env
-   VITE_FIREBASE_API_KEY=your_firebase_api_key
+   VITE_FIREBASE_API_KEY=your_api_key
    VITE_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
    VITE_FIREBASE_PROJECT_ID=your_project_id
    VITE_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
-   VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
    VITE_FIREBASE_APP_ID=your_app_id
    ```
 
-4. **Firestore Security Rules**
-   Set up the following security rules in your Firestore database:
-   ```javascript
-   rules_version = '2';
-   service cloud.firestore {
-     match /databases/{database}/documents {
-       // Users can read/write their own user document
-       match /users/{userId} {
-         allow read, write: if request.auth != null && request.auth.uid == userId;
-         allow read: if request.auth != null;
-       }
-       
-       // Conversations - users can only access conversations they're part of
-       match /conversations/{conversationId} {
-         allow read, write: if request.auth != null && 
-           request.auth.uid in resource.data.participants;
-         allow create: if request.auth != null && 
-           request.auth.uid in request.resource.data.participants;
-       }
-       
-       // Messages - users can only access messages in conversations they're part of
-       match /messages/{messageId} {
-         allow read, write: if request.auth != null && 
-           exists(/databases/$(database)/documents/conversations/$(resource.data.conversationId)) &&
-           request.auth.uid in get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.participants;
-         allow create: if request.auth != null && 
-           request.auth.uid == request.resource.data.senderId;
-       }
-     }
-   }
-   ```
+## 🔒 Security Rules
 
-5. **Run the Application**
-   ```bash
-   npm run dev
-   ```
+### Firestore Rules
 
-## Architecture Overview
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
 
-### Frontend Architecture
-- **React 18** with functional components and hooks
-- **TypeScript** for type safety and better developer experience
-- **Custom Hooks** for authentication and chat logic
-- **Component-based Design** with clear separation of concerns
+    // Conversations
+    match /conversations/{conversationId} {
+      allow read, write: if request.auth != null &&
+        request.auth.uid in resource.data.participants;
+      allow create: if request.auth != null &&
+        request.auth.uid in request.resource.data.participants;
+    }
 
-### Backend Integration
-- **Firebase Auth** for user authentication and session management
-- **Firestore** for real-time database with automatic synchronization
-- **Real-time Listeners** for instant message delivery and presence updates
-- **Security Rules** for data protection and access control
-
-### Database Schema
-
-#### Users Collection
-```typescript
-{
-  uid: string;           // Firebase Auth UID
-  email: string;         // User email
-  username: string;      // Display username
-  displayName: string;   // Full display name
-  isOnline: boolean;     // Online status
-  lastSeen: timestamp;   // Last activity timestamp
-  createdAt: timestamp;  // Account creation time
+    // Messages
+    match /messages/{messageId} {
+      allow read, write: if request.auth != null &&
+        exists(/databases/$(database)/documents/conversations/$(resource.data.conversationId)) &&
+        request.auth.uid in get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.participants;
+    }
+  }
 }
 ```
 
-#### Conversations Collection
-```typescript
-{
-  participants: string[];    // Array of user UIDs
-  isGroup: boolean;         // Whether it's a group chat
-  groupName?: string;       // Group name (if group chat)
-  lastMessage?: string;     // Last message content
-  lastMessageTime: timestamp; // Last message timestamp
-  createdAt: timestamp;     // Conversation creation time
+### Firebase Storage Rules
+
+```javascript
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /avatars/{userId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
 }
 ```
 
-#### Messages Collection
+## 🧪 Run the App Locally
+
+```bash
+npm run dev
+```
+
+Then visit: <http://localhost:5173>
+
+## 📚 How It Works
+
+### 🔐 Authentication
+
+- Firebase Auth handles sign-up/login
+- User data is stored separately in a `users` Firestore collection
+- Custom authHelpers handle Firestore updates (e.g. username, avatar)
+
+### 💬 Chat System
+
+- Messages and conversations are stored in Firestore
+- Real-time updates via Firestore listeners
+- Supports both individual and group chats
+
+### 👤 Avatar Upload
+
+- Avatars are uploaded to Firebase Storage at: `avatars/{uid}/filename`
+- Old avatars are deleted before new ones are uploaded
+- Download URL is saved to the users document
+
+### 🔄 Presence Tracking
+
+- Updates user `isOnline` and `lastSeen` in real time using Firestore
+
+## 🧱 Database Structure
+
+### 📘 users
+
 ```typescript
 {
-  conversationId: string;   // Reference to conversation
-  senderId: string;         // Message sender UID
-  content: string;          // Message content
-  messageType: string;      // 'text', 'image', or 'file'
-  timestamp: timestamp;     // Message timestamp
-  readBy: string[];         // Array of user UIDs who read the message
+  uid: string;
+  email: string;
+  username: string;
+  avatar: string;
+  isOnline: boolean;
+  lastSeen: timestamp;
+  createdAt: timestamp;
 }
 ```
 
-## Key Implementation Details
+### 💬 conversations
 
-### Real-time Features
-- **Firestore Listeners**: Real-time synchronization for messages and conversations
-- **User Presence Tracking**: Automatic online/offline detection
-- **Message Read Receipts**: Track message delivery and read status
-- **Group Management**: Real-time updates for group membership changes
+```typescript
+{
+  id: string;
+  participants: string[];
+  isGroup: boolean;
+  groupName?: string;
+  createdAt: timestamp;
+  lastMessage?: string;
+  lastMessageTime: timestamp;
+}
+```
 
-### Security Measures
-- **Firebase Auth**: Secure user authentication with email/password
-- **Firestore Security Rules**: Comprehensive rules to protect user data
-- **Input Validation**: Client-side validation with server-side enforcement
-- **Access Control**: Users can only access conversations they're part of
+### 📨 messages
 
-### Performance Optimizations
-- **Efficient Queries**: Optimized Firestore queries with proper indexing
-- **Real-time Subscriptions**: Automatic cleanup of listeners
-- **Optimistic UI Updates**: Immediate feedback for better user experience
-- **Lazy Loading**: Efficient loading of conversation history
+```typescript
+{
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  messageType: "text" | "image";
+  timestamp: timestamp;
+  readBy: string[];
+  replyTo?: {
+    messageId: string;
+    senderId: string;
+    content: string;
+    messageType: "text" | "image" | "file";
+  }
+}
+```
 
-## Code Quality
+## 📦 Deployment
 
-### Best Practices
-- **Clean Architecture**: Single responsibility principle and modular design
-- **TypeScript Types**: Comprehensive type definitions for all data structures
-- **Error Handling**: Graceful error handling with user-friendly messages
-- **Responsive Design**: Mobile-first approach with desktop optimization
-- **Accessibility**: Proper ARIA labels and keyboard navigation
+### Options
 
-### Testing Ready
-- **Modular Components**: Easy to unit test individual components
-- **Custom Hooks**: Isolated business logic for testing
-- **Firebase Emulators**: Local development and testing environment
-- **Type Safety**: Compile-time error detection
+- **Firebase Hosting**
+  - Great for full integration
+  - Use `firebase deploy`
+  
+- **Netlify / Vercel**
+  - Static hosting for Vite apps
+  
+- **Docker**
+  - Containerized deployment (optional)
 
-## Group Chat Features
+## 📌 Future Enhancements
 
-### Creating Groups
-- **Multi-user Selection**: Select multiple users to create a group
-- **Custom Group Names**: Set meaningful names for group conversations
-- **Minimum Participants**: Enforce minimum of 2 participants for groups
+- ✅ Avatar Uploading (with deletion of old)
+- ⏳ File Sharing
+- ⏳ Typing Indicators
+- ⏳ Push Notifications
+- ⏳ Dark Mode
+- ⏳ Video/Audio Messaging
 
-### Group Management
-- **Add Members**: Dynamically add new users to existing groups
-- **Remove Members**: Remove users from group conversations
-- **Member List**: View all group participants with online status
-- **Group Settings**: Dedicated interface for group administration
+## 🧑‍💻 Contributing
 
-### Group Messaging
-- **Sender Identification**: Clear indication of who sent each message
-- **Participant Count**: Display number of members and online status
-- **Group Icons**: Visual distinction between direct and group conversations
+Pull requests are welcome! Please follow coding standards and include relevant tests.
 
-## Deployment
+## 📝 License
 
-The application is ready for deployment on modern hosting platforms:
-- **Firebase Hosting**: Seamless integration with Firebase services
-- **Vercel/Netlify**: Static site deployment with environment variables
-- **Docker**: Containerized deployment for any platform
-
-## Future Enhancements
-
-- **File Sharing**: Upload and share images, documents, and media
-- **Message Search**: Full-text search across conversation history
-- **Push Notifications**: Real-time notifications for new messages
-- **Voice Messages**: Record and send audio messages
-- **Video Calling**: Integrate WebRTC for voice and video calls
-- **Message Reactions**: React to messages with emojis
-- **Message Threading**: Reply to specific messages
-- **Admin Roles**: Group admin permissions and moderation
-- **Message Encryption**: End-to-end encryption for enhanced security
-
-This project showcases professional-level backend development skills while providing a polished, production-ready messaging application with both individual and group communication capabilities.
+MIT License. See LICENSE for more info.
